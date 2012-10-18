@@ -1,0 +1,13 @@
+/.settings
+/.project
+*.pyc
+*.pyo
+/.pydevproject
+/bin
+/dist
+/parts
+/eggs
+/downloads
+/build
+/develop-eggs
+*.egg-info
