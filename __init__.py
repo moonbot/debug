@@ -9,8 +9,8 @@ Copyright (c) 2012 Moonbot Studios. All rights reserved.
 Set of tools to assist in script debugging.
 """
 
-import profile
 import gprof2dot
+from profile import *
 
 def reloadAll():
 	import profile

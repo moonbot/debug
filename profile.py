@@ -22,6 +22,18 @@ default_dotExecPath = {
     'mac':"/usr/local/bin/dot",
 }
 
+''' ---- Decorators ---- '''
+
+def dotMap(*dot_args, **dot_kwargs):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            f = func # For call stack
+            return createDotMap("f(*args, **kwargs)", *dot_args, **dot_kwargs)
+        return wrapper
+    return decorator
+
+''' -------------------- '''
+
 def quoteForPOSIX(string):
     '''quote a string so it can be used as an argument in a  posix shell
 
@@ -52,7 +64,7 @@ def getTempFile(name):
     tmpFile = os.path.join(tmp, name)
     return tmpFile
 
-def createDotMap(cmd, outputImage=None, outputProfile=None, dotExec=None, openImage=False, showStack=False, **kwargs):
+def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, **kwargs):
     '''
     Profile the execution of a command and create a dot map using gprof2dot
     Command should be exactly what the normal code would be in string form
@@ -72,7 +84,9 @@ def createDotMap(cmd, outputImage=None, outputProfile=None, dotExec=None, openIm
         if dotExec:
             LOG.error("Path: {0}".format(dotExec))
         return
+    saveOutputProfile = False
     if outputProfile:
+        saveOutputProfile = True
         outputProfilePath = _cleanPath(outputProfile)
     else:
         outputProfilePath = "{0}.profile".format(os.path.splitext(outputImagePath)[0])
@@ -81,7 +95,7 @@ def createDotMap(cmd, outputImage=None, outputProfile=None, dotExec=None, openIm
     kwargs = {
         'outputFile':outputProfilePath,
         'cmd':cmd,
-        'frameDepth':1,
+        'frameDepth':_frameDepth,
     }
     totalTime = createProfile(**kwargs)
 
@@ -111,13 +125,14 @@ def createDotMap(cmd, outputImage=None, outputProfile=None, dotExec=None, openIm
             LOG.error("Unable to open file: {0}".format(outputImagePath))
 
     # Cleanup
-    # try:
-    #     os.remove(gProfOutputPath)
-    #     LOG.debug("Removed: {0}".format(gProfOutputPath))
-    #     os.remove(outputProfilePath)
-    #     LOG.debug("Removed: {0}".format(outputProfilePath))
-    # except Exception, e:
-    #     LOG.warning("Warning unable to remove profile. {0}".format(e))
+    try:
+        os.remove(gProfOutputPath)
+        LOG.debug("Removed: {0}".format(gProfOutputPath))
+        if not saveOutputProfile:
+            os.remove(outputProfilePath)
+            LOG.debug("Removed: {0}".format(outputProfilePath))
+    except Exception, e:
+        LOG.warning("Warning unable to remove profile. {0}".format(e))
 
 def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth=0):
     ''' Profile the execution of a command and save it to a file '''
@@ -127,6 +142,9 @@ def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth
         global_dict = call_frame.f_globals
     outputFile = _cleanPath(outputFile)
     startTime = time.time()
+    print "local_dict: %s" % local_dict # TESTING
+    print "global_dict: %s" % global_dict # TESTING
+
     cProfile.runctx(cmd, global_dict, local_dict, outputFile)
     return time.time() - startTime
 
@@ -154,10 +172,10 @@ def _cleanPath(path):
     if path is None:
         nameTmp = "profileGraph_{0}.png".format(time.time())
         path = getTempFile(nameTmp)
-    path = os.path.abspath(path)
     path = os.path.expandvars(path)
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
+    path = os.path.abspath(path)
     return path
 
 def _createGProfConfig(outputPath, outputProfile, cmd, label):
