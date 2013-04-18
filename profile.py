@@ -22,6 +22,11 @@ default_dotExecPath = {
     'mac':"/usr/local/bin/dot",
 }
 
+__all__  = [ 
+    'dotMap',
+    'timeIt',
+]
+
 ''' ---- Decorators ---- '''
 
 def dotMap(*dot_args, **dot_kwargs):
@@ -29,6 +34,13 @@ def dotMap(*dot_args, **dot_kwargs):
         def wrapper(*args, **kwargs):
             f = func # For call stack
             return createDotMap("f(*args, **kwargs)", *dot_args, **dot_kwargs)
+        return wrapper
+    return decorator
+
+def timeIt(*time_args, **time_kwargs):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            return timeFunc((func, args, kwargs), *time_args, **time_kwargs)
         return wrapper
     return decorator
 
@@ -63,6 +75,13 @@ def getTempFile(name):
         tmp = os.path.expanduser('~')
     tmpFile = os.path.join(tmp, name)
     return tmpFile
+
+def timeFunc(func, **kwargs):
+    import time
+    st = time.time()
+    result = func[0](*func[1], **func[2])
+    print "DEBUG_TIMEIT: {0}() {1:f} seconds".format(func[0].__name__, time.time() - st)
+    return result
 
 def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, **kwargs):
     '''
