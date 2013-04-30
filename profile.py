@@ -14,6 +14,7 @@ import os, sys, time
 import pstats
 import subprocess
 import gprof2dot
+from production.utils import CallbackWithArgs
 
 LOG = logging.getLogger(__name__)
 
@@ -32,8 +33,10 @@ __all__  = [
 def dotMap(*dot_args, **dot_kwargs):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            f = func # For call stack
-            return createDotMap("f(*args, **kwargs)", *dot_args, **dot_kwargs)
+            def resultWrapper():
+                global _profile_result
+                _profile_result = func(*args, **kwargs)
+            return createDotMap("resultWrapper()", *dot_args, **dot_kwargs)
         return wrapper
     return decorator
 
@@ -116,7 +119,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
         'cmd':cmd,
         'frameDepth':_frameDepth,
     }
-    totalTime = createProfile(**kwargs)
+    result, totalTime = createProfile(**kwargs)
 
     # Create the gprof configuration
     gProfOutputPath = "{0}.gprofdot".format(os.path.splitext(outputImagePath)[0])
@@ -153,19 +156,25 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     except Exception, e:
         LOG.warning("Warning unable to remove profile. {0}".format(e))
 
+    return result
+
 def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth=0):
-    ''' Profile the execution of a command and save it to a file '''
+    '''
+    Profile the execution of a command and save it to a file
+    Returns command result, and totalTime
+    '''
     if local_dict is None and global_dict is None:
         call_frame = sys._getframe(frameDepth).f_back
         local_dict = call_frame.f_locals
         global_dict = call_frame.f_globals
     outputFile = _cleanPath(outputFile)
     startTime = time.time()
-    print "local_dict: %s" % local_dict # TESTING
-    print "global_dict: %s" % global_dict # TESTING
 
     cProfile.runctx(cmd, global_dict, local_dict, outputFile)
-    return time.time() - startTime
+    import pprint
+
+    result = global_dict['_profile_result']
+    return result, (time.time() - startTime)
 
 def test_createDotMap():
     import socket
