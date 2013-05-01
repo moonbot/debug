@@ -99,7 +99,6 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     # Setup Paths
     outputImagePath = _cleanPath(outputImage)
     if dotExec is None:
-        print "loading dotExec"
         dotExec = _getDotExecPath()
     if dotExec is None or not os.path.exists(dotExec):
         LOG.error("Graphviz not found. Please supply the path to dot executable")
@@ -149,10 +148,10 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     # Cleanup
     try:
         os.remove(gProfOutputPath)
-        LOG.debug("Removed: {0}".format(gProfOutputPath))
+        # LOG.debug("Removed: {0}".format(gProfOutputPath))
         if not saveOutputProfile:
             os.remove(outputProfilePath)
-            LOG.debug("Removed: {0}".format(outputProfilePath))
+            # LOG.debug("Removed: {0}".format(outputProfilePath))
     except Exception, e:
         LOG.warning("Warning unable to remove profile. {0}".format(e))
 
@@ -171,7 +170,6 @@ def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth
     startTime = time.time()
 
     cProfile.runctx(cmd, global_dict, local_dict, outputFile)
-    import pprint
 
     result = global_dict['_profile_result']
     return result, (time.time() - startTime)
@@ -217,11 +215,6 @@ def _createGProfConfig(outputPath, outputProfile, cmd, label):
     gProf = gprof2dot.Main()
     gProf.main()
     gProf.output.close()
-    print os.path.exists(outputPath)
-    f = open(outputPath, 'r')
-    data = f.readlines()
-    print data
-    f.close()
 
 def _createDotMap(dotExec, outputImagePath, gProfOutputPath):
     ''' Use graphviz to create the dot graph '''
@@ -230,9 +223,9 @@ def _createDotMap(dotExec, outputImagePath, gProfOutputPath):
     if _getPlatform() == 'mac':
         kwargs['shell'] = True
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
-    LOG.debug("Dot Command: {0}".format(cmd))
+    # LOG.debug("Dot Command: {0}".format(cmd))
     p.wait()
-    LOG.debug("Dot Command Results: {0}".format(p.communicate()))
+    # LOG.debug("Dot Command Results: {0}".format(p.communicate()))
     LOG.info("Dot Graph available at: {0}".format(outputImagePath))
-    LOG.debug("dot return code: {0}".format(p.returncode))
+    # LOG.debug("dot return code: {0}".format(p.returncode))
     return p.returncode
