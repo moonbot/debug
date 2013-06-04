@@ -16,7 +16,7 @@ import subprocess
 import gprof2dot
 from production.utils import CallbackWithArgs
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getMbotLogger(__name__)
 
 default_dotExecPath = {
     'windows':'C:\\Program Files (x86)\\Graphviz 2.28\\bin\\dot.exe',
