@@ -14,14 +14,17 @@ import os, sys, time
 import pstats
 import subprocess
 import gprof2dot
+import envtools
 from production.utils import CallbackWithArgs
+import production.utils
 
 LOG = logging.getMbotLogger(__name__)
 
-default_dotExecPath = {
-    'windows':'C:\\Program Files (x86)\\Graphviz 2.28\\bin\\dot.exe',
-    'mac':"/usr/local/bin/dot",
-}
+DOT_EXEC = dict(
+    windows='dot.exe',
+    mac='dot',
+    linux='dot',
+)
 
 __all__  = [ 
     'dotMap',
@@ -100,11 +103,6 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     outputImagePath = _cleanPath(outputImage)
     if dotExec is None:
         dotExec = _getDotExecPath()
-    if dotExec is None or not os.path.exists(dotExec):
-        LOG.error("Graphviz not found. Please supply the path to dot executable")
-        if dotExec:
-            LOG.error("Path: {0}".format(dotExec))
-        return
     saveOutputProfile = False
     if outputProfile:
         saveOutputProfile = True
@@ -134,16 +132,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
 
     if openImage:
         time.sleep(.1) # Wait for the image to be closed
-        platform = _getPlatform()
-        try:
-            if platform == "windows":
-                os.startfile(outputImagePath)
-            elif platform == "mac":
-                cmd = "open \"{0}\"".format(outputImagePath)
-                op = subprocess.Popen(cmd, shell=True)
-                op.wait()
-        except:
-            LOG.error("Unable to open file: {0}".format(outputImagePath))
+        production.utils.open_file(outputImagePath)
 
     # Cleanup
     try:
@@ -178,21 +167,10 @@ def test_createDotMap():
     import socket
     createDotMap("socket.gethostname()", openImage=True)
 
-def _getPlatform():
-    ''' Get the os of the current system in a standard format '''
-    if ((sys.platform.lower() == "win32") or (sys.platform.lower() == "win64")):
-        return "windows"
-    elif (sys.platform.lower() == "darwin"):
-        return "mac"
-    else:
-        return "linux"
-
 def _getDotExecPath():
     ''' Locate the dot executable path '''
-    platform = _getPlatform()
-    if default_dotExecPath.has_key(platform):
-        return default_dotExecPath[platform]
-    return None
+    platform = envtools.get_os()
+    return DOT_EXEC[platform]
 
 def _cleanPath(path):
     if path is None:
@@ -218,14 +196,14 @@ def _createGProfConfig(outputPath, outputProfile, cmd, label):
 
 def _createDotMap(dotExec, outputImagePath, gProfOutputPath):
     ''' Use graphviz to create the dot graph '''
-    cmd = "\"{0}\" -v -Tpng \"{2}\" -o \"{1}\"".format(dotExec, outputImagePath, gProfOutputPath)
+    cmd = "{0} -v -Tpng \"{1}\" -o \"{2}\"".format(dotExec, gProfOutputPath, outputImagePath)
     kwargs = {}
-    if _getPlatform() == 'mac':
+    if envtools.get_os() in ('mac', 'linux'):
         kwargs['shell'] = True
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
-    # LOG.debug("Dot Command: {0}".format(cmd))
+    LOG.debug("Dot Command: {0}".format(cmd))
+    p = production.utils.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
-    # LOG.debug("Dot Command Results: {0}".format(p.communicate()))
+    LOG.debug("Dot Command Results: {0}".format(p.communicate()))
     LOG.info("Dot Graph available at: {0}".format(outputImagePath))
-    # LOG.debug("dot return code: {0}".format(p.returncode))
+    LOG.debug("dot return code: {0}".format(p.returncode))
     return p.returncode
