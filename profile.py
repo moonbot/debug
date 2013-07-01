@@ -89,7 +89,7 @@ def timeFunc(func, **kwargs):
     print "DEBUG_TIMEIT: {0}() {1:f} seconds".format(func[0].__name__, time.time() - st)
     return result
 
-def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, **kwargs):
+def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, msg='', **kwargs):
     '''
     Profile the execution of a command and create a dot map using gprof2dot
     Command should be exactly what the normal code would be in string form
@@ -124,7 +124,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
         import traceback
         label = "\"{0}\"".format("\n".join(traceback.format_stack()))
     else:
-        label = "{0} | Total Time: {1}".format(cmd, totalTime)
+        label = "{0} | Total Time: {1} | {2}".format(cmd, totalTime, msg)
     _createGProfConfig(gProfOutputPath, outputProfilePath, cmd, label)
 
     # Create the dot graph
