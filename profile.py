@@ -17,6 +17,7 @@ import gprof2dot
 import envtools
 from production.utils import CallbackWithArgs
 import production.utils
+import production.processing
 
 LOG = logging.getMbotLogger(__name__)
 
@@ -201,7 +202,7 @@ def _createDotMap(dotExec, outputImagePath, gProfOutputPath):
     if envtools.get_os() in ('mac', 'linux'):
         kwargs['shell'] = True
     LOG.debug("Dot Command: {0}".format(cmd))
-    p = production.utils.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = production.processing.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
     LOG.debug("Dot Command Results: {0}".format(p.communicate()))
     LOG.info("Dot Graph available at: {0}".format(outputImagePath))
