@@ -136,7 +136,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
 
     if openImage:
         time.sleep(.1) # Wait for the image to be closed
-        production.utils.open_file(outputImagePath)
+        envtools.open_file(outputImagePath)
 
     # Cleanup
     try:
