@@ -15,7 +15,7 @@ import pstats
 import subprocess
 import gprof2dot
 import envtools
-from production.utils import CallbackWithArgs
+from envtools.callbacks import CallbackWithArgs
 import production.utils
 import production.processing
 
