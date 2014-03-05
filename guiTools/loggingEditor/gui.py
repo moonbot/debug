@@ -13,21 +13,13 @@ import core
 
 __all__ = [
     'QLoggingEditor',
-    'window',
-    '_WINDOW',
-    'app',
 ]
 
 LOG = mbotenv.get_logger(__name__)
 
 SCRIPT_DIR = os.path.dirname(__file__)
-
-
-_WINDOW = None
-SCRIPT_DIR = os.path.dirname(__file__)
 UI = os.path.join(SCRIPT_DIR, 'views/loggingEditor.ui')
 base, form = qt.loadUiType(UI)
-QPointF(100, 100), QPointF(200, 200)
 
 class QLoggingEditor(base, form):
     onClose = Signal()
@@ -70,7 +62,6 @@ class QLoggingEditor(base, form):
         self.filtersButton.clicked.connect(self.QFiltersDialog)
         self.refreshButton.clicked.connect(self.refresh)
 
-    
     def executeCode(self):
         pass
 
@@ -82,11 +73,7 @@ class QLoggingEditor(base, form):
         self.onClose.emit()
         return super(QLoggingEditor, self).closeEvent(event)
 
-
     def QExecuteDialog(self):
-
-
-        #self.executeDialog = QWidget()
         self.executeDialog = core.QLineEditPopUpView()
        
         self.executeDialog.setWindowFlags(self.executeDialog.windowFlags() | Qt.Popup)
@@ -102,7 +89,6 @@ class QLoggingEditor(base, form):
         self.executeDialog.show()
         
     def QFiltersDialog(self):
-
         if self.filtersDialog == None:
             core.useCheckboxes = True
             self.filtersDialog = core.QLoggingLevelPopupView(parent=self, useCheckboxes=True)
@@ -132,32 +118,3 @@ class QLoggingEditor(base, form):
             exec(code)
         self.refresh()
         self.executeDialog.hide()
-
-
-_WINDOW = None
-def window(parent=None):
-    """
-    Start the Scene Dependencies Window
-    """
-    global _WINDOW
-    if _WINDOW == None:
-        wnd = QLoggingEditor(parent=parent)
-        _WINDOW = wnd
-    if _WINDOW.isVisible() == False: 
-        _WINDOW.show()
-    else:
-        _WINDOW.activateWindow()
-    return _WINDOW
-
-def app():
-    app = QApplication(sys.argv)
-    app.setApplicationName('Logging Editor')
-    #app.setStyle(qt.QCustomStyle())
-    win = window()
-    win.onClose.connect(app.quit)
-    win.activateWindow()
-    win.raise_()
-    sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    app()

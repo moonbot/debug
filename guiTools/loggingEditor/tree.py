@@ -1,12 +1,13 @@
-
 from PySide.QtCore import *
 from PySide.QtGui import *
-import logging
 
-try:
-    LOG = logging.getMbotLogger('loggingEditor')
-except:
-    LOG = logging.getLogger('loggingEditor')
+import mbotenv
+
+__all__ = [
+    'loggingTreeItem'
+]
+
+LOG = mbotenv.get_logger(__name__)
 
 class loggingTreeItem(QObject):
     def __init__(self, logger, parent=None, children=None):

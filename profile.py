@@ -14,15 +14,15 @@ import os, sys, time
 import pstats
 import subprocess
 import gprof2dot
+
+import mbotenv
 import envtools
 from envtools.callbacks import CallbackWithArgs
+
 import production.utils
 import production.processing
 
-try:
-    LOG = logging.getMbotLogger(__name__)
-except:
-    LOG = logging.getLogger(__name__)
+LOG = mbotenv.get_logger(__name__)
 
 DOT_EXEC = dict(
     windows='dot.exe',

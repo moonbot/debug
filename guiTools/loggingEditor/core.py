@@ -9,15 +9,19 @@ from envtools import cached_property
 import os
 import sys
 
-LOG = mbotenv.get_logger(__name__)
-
 __all__ = [
     'QLoggingTreeModel',
     'QLoggingTreeItem',
     'getLoggers',
 ]
 
+LOG = mbotenv.get_logger(__name__)
 SCRIPT_DIR = os.path.dirname(__file__)
+
+# Qt Model Roles
+LoggingLevelRole = 32
+LoggingLevelDataRole = 33
+LoggingTreeItemRole = 34
 
 LEVEL_MAP = [
     (10, {
@@ -53,10 +57,6 @@ def prep_levels_icons():
         if iconPath:
             data['pixmap'] = QPixmap(iconPath.format(SCRIPT_DIR=SCRIPT_DIR))
     return True
-
-LoggingLevelRole = 32
-LoggingLevelDataRole = 33
-LoggingTreeItemRole = 34
 
 class QTreeModel(QAbstractItemModel):
     def reload(self):
@@ -270,16 +270,17 @@ class QLoggingTreeDelegate(QAbstractItemDelegate):
         icon = index.data(role=Qt.DecorationRole)
         gradient = index.data(role=Qt.BackgroundRole)
         painter.setRenderHint(QPainter.Antialiasing)
-        try:
-            gradient.setStart(*option.rect.topLeft().toTuple())
-            gradient.setFinalStop(*option.rect.bottomLeft().toTuple())
-            painter.fillRect(option.rect, gradient)
-            centerX = option.rect.center().x() - icon.rect().width()/2
-            centerY = option.rect.center().y() - icon.rect().height()/2
-            painter.drawPixmap(QPoint(centerX, centerY), icon)
-        except Exception as e:
-            print e # TESTING
-            pass
+        if gradient:
+            try:
+                gradient.setStart(*option.rect.topLeft().toTuple())
+                gradient.setFinalStop(*option.rect.bottomLeft().toTuple())
+                painter.fillRect(option.rect, gradient)
+                centerX = option.rect.center().x() - icon.rect().width()/2
+                centerY = option.rect.center().y() - icon.rect().height()/2
+                painter.drawPixmap(QPoint(centerX, centerY), icon)
+            except Exception as e:
+                print e # TESTING
+                pass
 
     def sizeHint(self, option, index):
         return index.data(role=Qt.SizeHintRole)
@@ -632,14 +633,3 @@ class QLineEditPopUpView(QDialog):
         path.addPolygon(poly)
         painter.fillPath(path, painter.brush())
         super(QLineEditPopUpView, self).paintEvent(event)
-
-
-if __name__ == '__main__':
-    import gui
-    gui.app()
-
-    # import sys
-    # app = QApplication(sys.argv)
-    # w = QLoggingLevelPopupView()
-    # w.show()
-    # app.exec_()

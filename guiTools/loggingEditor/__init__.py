@@ -12,5 +12,30 @@ def reloadAll():
     import core
     reload(core)
 
-def window():
-	gui.app()
+_WINDOW = None
+def window(parent=None):
+    """
+    Start the Scene Dependencies Window
+    """
+    global _WINDOW
+    if _WINDOW == None:
+        wnd = gui.QLoggingEditor(parent=parent)
+        _WINDOW = wnd
+    if _WINDOW.isVisible() == False: 
+        _WINDOW.show()
+    else:
+        _WINDOW.activateWindow()
+    return _WINDOW
+
+def app():
+    app = QApplication(sys.argv)
+    app.setApplicationName('Logging Editor')
+    #app.setStyle(qt.QCustomStyle())
+    win = window()
+    win.onClose.connect(app.quit)
+    win.activateWindow()
+    win.raise_()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    app()
