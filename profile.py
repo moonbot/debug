@@ -14,6 +14,7 @@ import os, sys, time
 import pstats
 import subprocess
 import gprof2dot
+import inspect
 
 import mbotenv
 import envtools
@@ -62,6 +63,16 @@ def timeIt(*time_args, **time_kwargs):
     def decorator(func):
         def wrapper(*args, **kwargs):
             return timeFunc((func, args, kwargs), *time_args, **time_kwargs)
+        if inspect.isgeneratorfunction(func):
+            def wrapper(*args, **kwargs):
+                totalTime = 0
+                yieldTime = time.time()
+                startTime = yieldTime
+                for genResult in func(*args, **kwargs):
+                    totalTime += time.time() - yieldTime
+                    yield genResult
+                    yieldTime = time.time()
+                print "DEBUG_TIMEIT_GEN: {0}() {1:f}s generator {2:f}s total".format(func.__name__, totalTime, time.time() - startTime)
         return wrapper
     return decorator
 
