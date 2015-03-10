@@ -31,7 +31,7 @@ DOT_EXEC = dict(
     linux='dot',
 )
 
-__all__  = [ 
+__all__  = [
     'dotMap',
     'cacheGrind',
     'timeIt',
@@ -108,11 +108,13 @@ def getTempFile(name):
     tmpFile = os.path.join(tmp, name)
     return tmpFile
 
-def timeFunc(func, **kwargs):
+def timeFunc(func, threshold=None):
     import time
     st = time.time()
     result = func[0](*func[1], **func[2])
-    print "DEBUG_TIMEIT: {0}() {1:f} seconds".format(func[0].__name__, time.time() - st)
+    totalTime = time.time() - st
+    if threshold is None or totalTime > threshold:
+        print "DEBUG_TIMEIT: {0}() {1:f} seconds".format(func[0].__name__, totalTime)
     return result
 
 def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, msg='', **kwargs):
@@ -135,7 +137,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
         outputProfilePath = _cleanPath(outputProfile)
     else:
         outputProfilePath = "{0}.profile".format(os.path.splitext(outputImagePath)[0])
-    
+
     # Create the profile
     kwargs = {
         'outputFile':outputProfilePath,
@@ -190,7 +192,7 @@ def createCacheGrind(cmd, outputProfile=None, _frameDepth=1, **kwargs):
     outputProfilePath = _cleanPath(outputProfile)
     outputProfilePath = "{0}.profile".format(os.path.splitext(outputProfilePath)[0])
     calltreePath = os.path.splitext(outputProfilePath)[0] + '.calltree'
-    
+
     # Create the profile
     kwargs = {
         'outputFile':outputProfilePath,
@@ -218,7 +220,7 @@ def _createPyCallGraph(profilePath, outputCallTreeFilePath):
     p.wait()
     LOG.debug("PyProf2CallTree Command Results: {0}".format(p.communicate()))
     LOG.debug("PyProf2CallTree return code: {0}".format(p.returncode))
-    return p.returncode  
+    return p.returncode
 
     return True
 
