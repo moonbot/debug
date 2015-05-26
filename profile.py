@@ -8,17 +8,16 @@ Copyright (c) 2012 Moonbot Studios. All rights reserved.
 
 Set of profiling tools to assist in optimizing python scripts
 """
-import cProfile
-import logging
-import os, sys, time
-import pstats
+import os
+import sys
+import time
 import subprocess
 import gprof2dot
 import inspect
+import cProfile
 
 import mbotenv
 import envtools
-from envtools.callbacks import CallbackWithArgs
 
 import production.utils
 import production.processing
@@ -27,17 +26,19 @@ LOG = mbotenv.get_logger(__name__)
 
 DOT_EXEC = dict(
     windows='dot.exe',
+    cygwin='dot',
     mac='dot',
     linux='dot',
 )
 
-__all__  = [
+__all__ = [
     'dotMap',
     'cacheGrind',
     'timeIt',
 ]
 
 ''' ---- Decorators ---- '''
+
 
 def dotMap(*dot_args, **dot_kwargs):
     def decorator(func):
@@ -49,6 +50,7 @@ def dotMap(*dot_args, **dot_kwargs):
         return wrapper
     return decorator
 
+
 def cacheGrind(*dot_args, **dot_kwargs):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -58,6 +60,7 @@ def cacheGrind(*dot_args, **dot_kwargs):
             return createCacheGrind("resultWrapper()", *dot_args, **dot_kwargs)
         return wrapper
     return decorator
+
 
 def timeIt(*time_args, **time_kwargs):
     def decorator(func):
@@ -78,6 +81,7 @@ def timeIt(*time_args, **time_kwargs):
 
 ''' -------------------- '''
 
+
 def quoteForPOSIX(string):
     '''quote a string so it can be used as an argument in a  posix shell
 
@@ -96,6 +100,7 @@ def quoteForPOSIX(string):
     '''
     return "\\'".join("'" + p + "'" for p in string.split("'"))
 
+
 def getTempFile(name):
     ''' Return a temp file path with the supplied extension '''
     tmp = None
@@ -108,6 +113,7 @@ def getTempFile(name):
     tmpFile = os.path.join(tmp, name)
     return tmpFile
 
+
 def timeFunc(func, threshold=None):
     import time
     st = time.time()
@@ -116,6 +122,7 @@ def timeFunc(func, threshold=None):
     if threshold is None or totalTime > threshold:
         print "DEBUG_TIMEIT: {0}() {1:f} seconds".format(func[0].__name__, totalTime)
     return result
+
 
 def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotExec=None, showStack=False, _frameDepth=1, msg='', **kwargs):
     '''
@@ -131,24 +138,21 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     outputImagePath = _cleanPath(outputImage)
     if dotExec is None:
         dotExec = _getDotExecPath()
-    saveOutputProfile = False
     if outputProfile:
-        saveOutputProfile = True
         outputProfilePath = _cleanPath(outputProfile)
     else:
         outputProfilePath = "{0}.profile".format(os.path.splitext(outputImagePath)[0])
 
     # Create the profile
     kwargs = {
-        'outputFile':outputProfilePath,
-        'cmd':cmd,
-        'frameDepth':_frameDepth,
+        'outputFile': outputProfilePath,
+        'cmd': cmd,
+        'frameDepth': _frameDepth,
     }
     result, totalTime = createProfile(**kwargs)
 
     # Create the gprof configuration
     gProfOutputPath = "{0}.gprofdot".format(os.path.splitext(outputImagePath)[0])
-    print "gProfOutputPath: {0}".format(gProfOutputPath) # TESTING
     if showStack:
         import traceback
         label = "\"{0}\"".format("\n".join(traceback.format_stack()))
@@ -160,7 +164,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     _createDotMap(dotExec, outputImagePath, gProfOutputPath)
 
     if openImage:
-        time.sleep(.1) # Wait for the image to be closed
+        time.sleep(.1)  # Wait for the image to be closed
         envtools.open_file(outputImagePath)
 
     # # Cleanup
@@ -174,6 +178,7 @@ def createDotMap(cmd, outputImage=None, openImage=True, outputProfile=None, dotE
     #     LOG.warning("Warning unable to remove profile. {0}".format(e))
 
     return result
+
 
 def createCacheGrind(cmd, outputProfile=None, _frameDepth=1, **kwargs):
     '''
@@ -195,9 +200,9 @@ def createCacheGrind(cmd, outputProfile=None, _frameDepth=1, **kwargs):
 
     # Create the profile
     kwargs = {
-        'outputFile':outputProfilePath,
-        'cmd':cmd,
-        'frameDepth':_frameDepth,
+        'outputFile': outputProfilePath,
+        'cmd': cmd,
+        'frameDepth': _frameDepth,
     }
     result, totalTime = createProfile(**kwargs)
 
@@ -209,11 +214,12 @@ def createCacheGrind(cmd, outputProfile=None, _frameDepth=1, **kwargs):
 
     return result
 
+
 PYPROF2CALLTREEEXEC = 'pyprof2calltree'
 def _createPyCallGraph(profilePath, outputCallTreeFilePath):
     cmd = "{0} -i \"{1}\" -o \"{2}\"".format(PYPROF2CALLTREEEXEC, profilePath, outputCallTreeFilePath)
     kwargs = {}
-    if envtools.get_os() in ('mac', 'linux'):
+    if envtools.get_os() in ('mac', 'linux', 'cygwin'):
         kwargs['shell'] = True
     LOG.debug("PyProf2CallTree Command: {0}".format(cmd))
     p = production.processing.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -224,15 +230,17 @@ def _createPyCallGraph(profilePath, outputCallTreeFilePath):
 
     return True
 
+
 QCACHEGRINDEXEC = 'qcachegrind'
 def _launchQCacheGrind(calltreePath):
     cmd = "{0} \"{1}\"".format(QCACHEGRINDEXEC, calltreePath)
     kwargs = {}
-    if envtools.get_os() in ('mac', 'linux'):
+    if envtools.get_os() in ('mac', 'linux', 'cygwin'):
         kwargs['shell'] = True
     LOG.debug("QCacheGrind Command: {0}".format(cmd))
     p = production.processing.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return p
+
 
 def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth=0):
     '''
@@ -251,14 +259,16 @@ def createProfile(cmd, outputFile, global_dict=None, local_dict=None, frameDepth
     result = global_dict['_profile_result']
     return result, (time.time() - startTime)
 
+
 def test_createDotMap():
-    import socket
     createDotMap("socket.gethostname()", openImage=True)
+
 
 def _getDotExecPath():
     ''' Locate the dot executable path '''
     platform = envtools.get_os()
     return DOT_EXEC[platform]
+
 
 def _cleanPath(path):
     if path is None:
@@ -270,9 +280,11 @@ def _cleanPath(path):
     path = os.path.abspath(path)
     return path
 
+
 def _createGProfConfig(outputPath, outputProfile, cmd, label):
     ''' Create the dot graph configuration file from gprof2dot '''
-    gprofCmd = ["",
+    gprofCmd = [
+        "",
         "-f", "pstats", outputProfile,
         "-o", outputPath,
         "-l", label,
@@ -282,11 +294,12 @@ def _createGProfConfig(outputPath, outputProfile, cmd, label):
     gProf.main()
     gProf.output.close()
 
+
 def _createDotMap(dotExec, outputImagePath, gProfOutputPath):
     ''' Use graphviz to create the dot graph '''
     cmd = "{0} -v -Tpng \"{1}\" -o \"{2}\"".format(dotExec, gProfOutputPath, outputImagePath)
     kwargs = {}
-    if envtools.get_os() in ('mac', 'linux'):
+    if envtools.get_os() in ('mac', 'linux', 'cygwin'):
         kwargs['shell'] = True
     LOG.debug("Dot Command: {0}".format(cmd))
     p = production.processing.launch_subprocess(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
