@@ -1,7 +1,7 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from Qt import QtCore, QtGui, QtWidgets
 
 import mbotenv
+import envtools
 
 __all__ = [
     'loggingTreeItem'
@@ -9,14 +9,15 @@ __all__ = [
 
 LOG = mbotenv.get_logger(__name__)
 
-class loggingTreeItem(QObject):
+
+class loggingTreeItem(QtCore.QObject):
     def __init__(self, logger, parent=None, children=None):
         self.parent = parent
         self.logger = logger
         self.children = []
-        if children != None:
+        if children is not None:
             self.addChildren(children)
- 
+
     def addChildren(self, children):
-        children = asList(children)
+        children = envtools.asList(children)
         self.children.extend(children)

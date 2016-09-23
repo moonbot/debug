@@ -1,5 +1,4 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from Qt import QtCore, QtGui, QtWidgets
 
 import logging
 import mbotenv
